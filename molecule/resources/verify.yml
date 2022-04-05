@@ -1,0 +1,60 @@
+---
+- name: Verify
+  hosts: all
+  vars_files:
+    - test_vars_add.yml
+  tasks:
+    - name: Testing add case
+      block:
+        - name: "Include add test data"
+          include_vars:
+            file: ../resources/vars/test_vars_add.yml
+
+        - name: get users list
+          shell: grep -oP '^([a-z_][a-z0-9_-]*[$]?)(?=\:)' /etc/passwd
+          register: etc_passwd
+        - assert:
+            that: '"{{ item }}" in {{ etc_passwd.stdout_lines }}'
+          loop: "{{ base_users | map(attribute='name') }}"
+
+        - name: get groups list
+          shell: grep -oP '^([a-z_][a-z0-9_-]*[$]?)(?=\:)' /etc/group
+          register: etc_group
+        - assert:
+            that: '"{{ item }}" in {{ etc_group.stdout_lines }}'
+          loop: "{{ base_groups | map(attribute='name') }}"
+
+        - name: get sudoers groups
+          shell: >
+            grep -oP '^(\s*\%[a-z_][a-z0-9_-]*[$]?)' /etc/sudoers | tr -d '%'
+          register: etc_sudoers
+        - assert:
+            that: '"{{ item }}" in {{ etc_sudoers.stdout_lines }}'
+          loop: >
+            {{ base_groups |
+               selectattr('sudoers', 'true') |
+               map(attribute='name') }}
+
+        - name: get installed package list
+          ansible.builtin.package_facts:
+        - assert:
+            that: >
+              "{{ item }}" in {{ lookup('dict', ansible_facts.packages) |
+                                 map(attribute='key') }}
+          loop: "{{ base_packages.pre_install }}"
+        - assert:
+            that: >
+              "{{ item }}" in {{ lookup('dict', ansible_facts.packages) |
+                                 map(attribute='key') }}
+          loop: "{{ base_packages.main }}"
+    - name: Testing delete case
+      block:
+        - name: "Include delete test data"
+          include_vars:
+            file: ../resources/vars/test_vars_delete.yml
+        - assert:
+            that: '"{{ item }}" not in {{ etc_group.stdout_lines }}'
+          loop: "{{ base_groups | map(attribute='name') }}"
+        - assert:
+            that: '"{{ item }}" not in {{ etc_passwd.stdout_lines }}'
+          loop: "{{ base_users | map(attribute='name') }}"

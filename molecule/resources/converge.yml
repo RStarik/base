@@ -1,0 +1,19 @@
+---
+- name: Converge
+  hosts: all
+  vars_files:
+    - ../resources/vars/test_vars_add.yml
+  tasks:
+    - name: "Include add test data"
+      include_vars:
+        file: ../resources/vars/test_vars_add.yml
+    - name: "Include base role"
+      ansible.builtin.include_role:
+        name: "base"
+
+    - name: "Include delete test data"
+      include_vars:
+        file: ../resources/vars/test_vars_delete.yml
+    - name: "Include base role"
+      ansible.builtin.include_role:
+        name: "base"

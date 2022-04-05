@@ -1,0 +1,57 @@
+---
+base_groups:
+  - name: sudo-no-pass
+    sudoers: true
+    no_passwd: true
+  - name: sudo
+    sudoers: true
+    no_passwd: false
+  - name: wheel
+    sudoers: false
+  - name: testgroup_sudoers1
+    sudoers: false
+  - name: testgroup_sudoers2
+    sudoers: true
+  - name: testgroup_sudoers3
+    no_passwd: true
+    sudoers: true
+  - name: testgroup_sudoers4
+    state: present
+    sudoers: true
+  - name: testgroup_sudoers5
+    state: present
+    sudoers: true
+    no_passwd: true
+  - name: testgroup_sudoers6
+    state: present
+    sudoers: true
+    no_passwd: false
+  - name: testgroup_sudoers7
+    state: present
+    sudoers: false
+    no_passwd: true
+
+base_users:
+  - name: user1
+    groups: ['sudo', 'testgroup_sudoers1']
+    key_path: ../resources/id_rsa.pub
+  - name: user2
+    state: present
+    groups: ['testgroup_sudoers1']
+    key_path: ../resources/id_rsa.pub
+  - name: user3
+    groups: ['sudo-no-pass']
+    key_path: ../resources/id_rsa.pub
+  - name: user4
+    groups: ['testgroup_sudoers1']
+    key_path: ../resources/id_rsa.pub
+  - name: user5
+    key_path: ../resources/id_rsa.pub
+
+base_packages:
+  pre_install:
+    - wget
+    - lsof
+  main:
+    - vim
+    - jq

@@ -1,0 +1,33 @@
+---
+- name: Prepare for delete tests
+  hosts: all
+  vars:
+    base_groups:
+      - usergroup_delete1
+      - usergroup_delete2
+      - usergroup_delete3
+      - testgroup_delete1
+      - testgroup_delete2
+      - testgroup_delete3
+      - testgroup_delete4
+    base_users:
+      - name: user_delete1
+      - name: user_delete2
+      - name: user_delete3
+      - name: user_delete4
+        groups: ['testgroup_delete1']
+      - name: user_delete5
+        groups: ['testgroup_delete1', 'testgroup_delete2']
+  tasks:
+    - name: Checking groups
+      ansible.builtin.group:
+        name: "{{ item }}"
+        state: present
+      loop: '{{ base_groups }}'
+
+    - name: Checking Users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        groups: "{{ item.groups | default(omit) }}"
+        state: present
+      loop: '{{ base_users }}'

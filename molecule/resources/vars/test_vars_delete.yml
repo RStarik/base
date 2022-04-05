@@ -1,0 +1,41 @@
+---
+base_groups:
+  - name: usergroup_delete1
+    state: absent
+  - name: usergroup_delete2
+    state: absent
+  - name: usergroup_delete3
+    state: absent
+  - name: testgroup_delete1
+    state: absent
+    sudoers: true
+  - name: testgroup_delete2
+    state: absent
+    sudoers: true
+    no_passwd: true
+  - name: testgroup_delete3
+    state: absent
+    sudoers: true
+    no_passwd: false
+  - name: testgroup_delete4
+    state: absent
+    sudoers: false
+    no_passwd: true
+
+base_users:
+  - name: user_delete1
+    state: absent
+  - name: user_delete2
+    key_path: ../resources/id_rsa.pub
+    state: absent
+  - name: user_delete3
+    groups: ['testgroup_sudoers1']
+    state: absent
+  - name: user_delete4
+    groups: ['testgroup_sudoers1']
+    key_path: ../resources/id_rsa.pub
+    state: absent
+  - name: user_delete5
+    state: absent
+
+base_packages:

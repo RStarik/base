@@ -1,0 +1,27 @@
+---
+dependency:
+  name: galaxy
+  enabled: true
+driver:
+  name: docker
+lint: |
+  set -e
+  yamllint .
+  ansible-lint .
+platforms:
+  - name: molecule_ubuntu_2110
+    image: ubuntu:21.10
+  - name: molecule_ubuntu_2004
+    image: ubuntu:20.04
+  - name: molecule_debian_buster
+    image: debian:buster
+  - name: molecule_debian_bullseye
+    image: debian:bullseye
+provisioner:
+  name: ansible
+  playbooks:
+    converge: ../resources/converge.yml
+    prepare: ../resources/prepare.yml
+    verify: ../resources/verify.yml
+verifier:
+  name: ansible

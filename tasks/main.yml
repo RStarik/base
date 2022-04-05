@@ -1,0 +1,79 @@
+---
+- name: Managing users and groups
+  block:
+    - name: Checking groups
+      ansible.builtin.group:
+        name: "{{ item.name }}"
+        state: "{{ item.state | default('present') }}"
+        system: "{{ item.system | default('no') }}"
+      loop: '{{ base_groups }}'
+
+    - name: Checking users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        groups: "{{ item.groups | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+        password: "{{ item.password | default(omit) }}"
+      loop: '{{ base_users }}'
+
+    - name: Checking authorized key
+      ansible.posix.authorized_key:
+        user: "{{ item.name }}"
+        state: present
+        key: "{{ lookup('file', item.key_path) }}"
+      loop: '{{ base_users }}'
+      when:
+        - item.key_path is defined
+        - item.state is defined
+        - item.state == 'present'
+
+    - name: Adding groups to sudoers
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^\s*%{{ item.name }}\s+'
+        line: '%{{ item.name }}
+          ALL=(ALL){{ " NOPASSWD:" if (item.no_passwd | default(false)) }} ALL'
+        validate: 'visudo -cf %s'
+      loop: '{{ base_groups }}'
+      when:
+        - (item.state | default('present') ) == 'present'
+        - item.sudoers
+
+    - name: Removing groups from sudoers
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: absent
+        regexp: '^%{{ item.name }}'
+        validate: 'visudo -cf %s'
+      loop: '{{ base_groups }}'
+      when: >
+        (item.sudoers is undefined) or
+        (item.sudoers is false)
+  become: !!bool yes
+
+- name: Installing packages
+  block:
+    - name: pre install
+      ansible.builtin.apt:
+        name: "{{ base_packages.pre_install | list }}"
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 5
+      when:
+        - base_packages.pre_install is defined
+        - (base_packages.pre_install | length) > 0
+
+    - name: main install
+      ansible.builtin.apt:
+        name: "{{ base_packages.main | list }}"
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 5
+      when:
+        - base_packages.main is defined
+        - base_packages.main | length > 0
+  become: !!bool yes
+  when: base_packages
